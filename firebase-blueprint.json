@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents an institute student or director.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "director"] },
+        "isVerified": { "type": "boolean" },
+        "verificationCode": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "phone", "role", "isVerified", "createdAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Represents a scheduled entry/review session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "studentEmail": { "type": "string" },
+        "studentPhone": { "type": "string" },
+        "reason": { "type": "string" },
+        "date": { "type": "string" },
+        "timeSlot": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending_email", "confirmed", "cancelled", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "managerNotes": { "type": "string" },
+        "verificationCode": { "type": "string" },
+        "isEmailConfirmed": { "type": "boolean" }
+      },
+      "required": ["id", "studentId", "studentName", "studentEmail", "studentPhone", "reason", "date", "timeSlot", "status", "createdAt", "verificationCode", "isEmailConfirmed"]
+    },
+    "WeeklySchedule": {
+      "title": "WeeklySchedule",
+      "description": "Represents director availability slot settings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "dayOfWeek": { "type": "integer" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "maxCapacity": { "type": "integer" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["id", "dayOfWeek", "startTime", "endTime", "maxCapacity", "isActive"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Represents an app notification log (email, SMS, or app push).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["email", "sms", "app"] },
+        "recipient": { "type": "string" },
+        "title": { "type": "string" },
+        "titleAr": { "type": "string" },
+        "content": { "type": "string" },
+        "contentAr": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "isUnread": { "type": "boolean" }
+      },
+      "required": ["id", "type", "recipient", "title", "content", "timestamp", "isUnread"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Collection of users."
+    },
+    "appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Collection of appointments."
+    },
+    "schedules/{scheduleId}": {
+      "schema": "WeeklySchedule",
+      "description": "Collection of weekly schedule slots."
+    },
+    "notifications/{notificationId}": {
+      "schema": "AppNotification",
+      "description": "Collection of notification logs."
+    }
+  }
+}

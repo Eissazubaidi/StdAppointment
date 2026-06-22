@@ -1,0 +1,8 @@
+{
+  "name": "Institute Manager Appointment Portal",
+  "description": "A bilingual English and Arabic responsive web portal for students to book appointments with the Institute Director, featuring email confirmation simulation, SMS/Push alert visualizer, director dashboard, advanced search, and statistics report module.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
