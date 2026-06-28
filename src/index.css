@@ -4,8 +4,74 @@
 @theme {
   --font-sans: "Inter", "Noto Kufi Arabic", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* Premium SaaS Color Palette */
+  --color-brand-primary: #00afea;
+  --color-brand-secondary: #52aba5;
+  --color-brand-accent: #6366f1;
+  
+  /* Smooth scale durations */
+  --transition-duration-premium: 300ms;
 }
 
 body {
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Custom Webkit Scrollbars for Premium Feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Premium Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 1px rgba(0, 175, 234, 0.2)); }
+  50% { opacity: 0.8; filter: drop-shadow(0 0 8px rgba(0, 175, 234, 0.5)); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+/* Smooth globally-applied theme transitions */
+.theme-transition {
+  transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+

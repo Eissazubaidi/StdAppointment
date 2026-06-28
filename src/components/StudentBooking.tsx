@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lang, Theme, WeeklySchedule, Appointment, User } from '../types';
 import { translations } from '../translations';
-import { Calendar as CalendarIcon, Clock, Send, AlertTriangle, CheckCircle, ShieldAlert, FileText, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Send, AlertTriangle, CheckCircle, ShieldAlert, FileText, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface StudentBookingProps {
   lang: Lang;
@@ -36,7 +36,7 @@ export default function StudentBooking({
   const getDayOfWeek = (dateString: string): number => {
     if (!dateString) return -1;
     const date = new Date(dateString);
-    return date.getDay(); // 0 = Sunday, 1 = Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
+    return date.getDay(); // 0 = Sunday, 1 = Monday, etc.
   };
 
   const dayOfWeekNumber = selectedDate ? getDayOfWeek(selectedDate) : -1;
@@ -91,7 +91,6 @@ export default function StudentBooking({
       return;
     }
 
-    // Call book handler
     onBookAppointment(selectedDate, selectedSlot, reason);
     setSuccessMessage(t.bookingCreatedSuccess);
     
@@ -122,98 +121,138 @@ export default function StudentBooking({
   const limits = getLimits();
 
   return (
-    <div className="space-y-6">
-      {/* Intro Hero Section - Sleek Premium */}
-      <div className={`p-8 rounded-3xl relative overflow-hidden border transition-all duration-300 ${theme === 'dark' ? 'bg-gradient-to-br from-slate-900 to-indigo-950/40 border-slate-800' : 'bg-gradient-to-br from-blue-50/60 to-indigo-50/20 border-slate-200'}`}>
-        <div className="absolute top-0 right-0 p-8 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
-          <CalendarIcon className="w-48 h-48" />
+    <div className="space-y-8 animate-fade-in theme-transition">
+      {/* Intro Hero Section - Sleek Premium UI/UX Redesign */}
+      <div className={`p-8 md:p-10 rounded-3xl relative overflow-hidden border transition-all duration-350 ${
+        theme === 'dark' 
+          ? 'bg-gradient-to-br from-slate-900/90 via-slate-950 to-indigo-950/30 border-slate-800/80 shadow-[0_8px_32px_rgba(0,0,0,0.3)]' 
+          : 'bg-gradient-to-br from-blue-50/50 via-indigo-50/20 to-slate-50 border-slate-200/60 shadow-[0_8px_30px_rgba(226,232,240,0.35)]'
+      }`}>
+        {/* Subtle backdrop glows for premium depth */}
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-blue-400/10 dark:bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-indigo-400/10 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="absolute top-0 right-0 p-8 opacity-[0.02] dark:opacity-[0.04] pointer-events-none">
+          <CalendarIcon className="w-56 h-56" />
         </div>
-        <div className="relative z-10 space-y-3">
-          <div className="inline-flex items-center gap-1.5 bg-blue-100/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-extrabold text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border border-blue-500/10">
-            <Sparkles className="w-3 h-3 text-blue-600" />
-            <span>{isRtl ? 'حجز موثق في ثوانٍ معدودة' : 'Instant Verified Booking'}</span>
+        
+        <div className="relative z-10 space-y-4">
+          <div className="inline-flex items-center gap-1.5 bg-blue-100/60 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full border border-blue-500/10">
+            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+            <span>{isRtl ? 'حجز ذكي ومؤكد فوري' : 'Instant Verified Queue Booking'}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-850 dark:text-slate-100">{t.bookAppointment}</h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-450 max-w-2xl leading-relaxed">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-850 dark:text-slate-100">
+            {t.bookAppointment}
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-550 dark:text-slate-400 max-w-3xl leading-relaxed">
             {isRtl 
-              ? 'أهلاً بك عزيزي الطالب. يتيح لك هذا النظام المتكامل تقديم طلب مقابلة مع مدير المعهد وتأشير موعدك بطريقة آمنة. يرجى اختيار اليوم وفترة الاستقبال المناسبة وكتابة غرض الزيارة بوضوح لتسهيل مراجعته واعتماده.'
-              : 'Welcome, dear student. This electronic system allows you to submit an official meeting proposal with the Institute Director. Register your email, reserve an open timing slot, and state your inquiries clearly for fast processing.'}
+              ? 'أهلاً بك في البوابة الذكية للمقابلة. يتيح لك هذا النظام المتكامل تقديم طلب مقابلة مع مدير المعهد وتأشير موعدك بطريقة آمنة. يرجى اختيار اليوم وفترة الاستقبال المناسبة وكتابة غرض الزيارة بوضوح لتسهيل مراجعته واعتماده.'
+              : 'Welcome to the Smart Scheduler Portal. This interface allows you to book dedicated reception slots directly with the director. Select an active date, choose your desired duration, and submit details securely.'}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Interactive Form - Sleek 3xl card */}
-        <div className={`lg:col-span-2 p-6 sm:p-8 rounded-3xl border transition-all duration-300 ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-6`}>
-          <div className="border-b border-slate-100 dark:border-slate-850 pb-4 flex items-center justify-between">
-            <h3 className="font-bold text-base sm:text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" />
-              <span>{isRtl ? 'الاستمارة الإلكترونية للمقابلة' : 'Appointment Application Form'}</span>
-            </h3>
-            <span className="text-[10px] text-slate-450 font-bold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full uppercase tracking-wider">
-              {isRtl ? 'شفرة آمنة' : 'Secure AES-256'}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Interactive Form - Premium Glass card */}
+        <div className={`lg:col-span-2 p-6 sm:p-8 rounded-3xl border transition-all duration-300 ${
+          theme === 'dark' 
+            ? 'bg-slate-900/60 border-slate-800/80 shadow-[0_4px_20px_rgba(0,0,0,0.15)]' 
+            : 'bg-white border-slate-150 shadow-[0_8px_30px_rgba(0,0,0,0.02)]'
+        } space-y-6`}>
+          <div className="border-b border-slate-100 dark:border-slate-850 pb-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 text-blue-600 rounded-xl">
+                <FileText className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-base sm:text-lg text-slate-850 dark:text-slate-100">
+                {isRtl ? 'الاستمارة الإلكترونية للمقابلة' : 'Appointment Application Form'}
+              </h3>
+            </div>
+            <span className="text-[9px] text-slate-450 font-mono font-bold bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-200/40 dark:border-slate-700">
+              {isRtl ? 'أمن البيانات معزز' : 'AES-256 SECURED'}
             </span>
           </div>
 
           {!currentUser ? (
-            <div className="text-center p-8 bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/10 rounded-2xl space-y-4">
-              <ShieldAlert className="w-12 h-12 text-amber-500 mx-auto" />
-              <div className="space-y-1">
+            <div className="text-center p-8 bg-amber-500/5 border border-amber-500/10 rounded-2xl space-y-5">
+              <div className="w-14 h-14 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+                <ShieldAlert className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
                 <p className="font-bold text-sm text-slate-800 dark:text-slate-200">{t.needLoginToBook}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'يتوافق نظامنا مع بروتوكولات حماية بيانات الطلاب الأكاديمية.' : 'Our platform respects strict student identity verifications.'}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {isRtl 
+                    ? 'يتوافق نظامنا مع بروتوكولات حماية بيانات الطلاب الأكاديمية والخصوصية الثنائية. يرجى تسجيل الدخول لحسابك لتفعيل الصلاحية.' 
+                    : 'To comply with university safety protocols and digital privacy policies, you need an authorized student account.'}
+                </p>
               </div>
               <button
                 onClick={onNavigateToPortal}
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-full transition text-xs shadow-lg shadow-blue-500/20"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold py-2.5 px-6 rounded-full transition-all text-xs shadow-lg shadow-blue-500/20"
               >
                 <span>{t.goToLogin}</span>
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Logged in Student Details Card */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded-2xl flex items-center justify-between">
-                <div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">{isRtl ? 'حساب الطالب النشط' : 'Active Student Client'}</div>
-                  <div className="font-bold text-sm text-slate-850 dark:text-slate-100">{currentUser.name}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-300 font-mono mt-0.5">{currentUser.email}</div>
+              {/* Active Logged in Student Details Pill */}
+              <div className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border ${
+                theme === 'dark' ? 'bg-slate-950/40 border-slate-850' : 'bg-slate-50/50 border-slate-100'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    {currentUser.name.slice(0, 2).trim().toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">
+                      {isRtl ? 'الحساب الطالب النشط' : 'Active Student Session'}
+                    </div>
+                    <div className="font-bold text-sm text-slate-850 dark:text-slate-100">{currentUser.name}</div>
+                    <div className="text-xs text-slate-550 dark:text-slate-400 font-mono mt-0.5">{currentUser.email}</div>
+                  </div>
                 </div>
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-green-500/10 text-green-600 border border-green-500/20">
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold ${
+                    currentUser.isVerified 
+                      ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' 
+                      : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                  }`}>
                     <CheckCircle className="w-3 h-3" />
-                    <span>{currentUser.isVerified ? (isRtl ? 'حساب مؤكد' : 'Verified ID') : (isRtl ? 'بانتظار تأكيد البريد' : 'Unconfirmed Email')}</span>
+                    <span>{currentUser.isVerified ? (isRtl ? 'هوية معتمدة' : 'Verified ID') : (isRtl ? 'بانتظار التأكيد' : 'Unconfirmed Email')}</span>
                   </div>
                 </div>
               </div>
 
               {errorMessage && (
-                <div className="p-4 bg-red-500/5 border border-red-500/10 text-red-600 dark:text-red-400 rounded-2xl text-xs flex gap-2 items-start animate-shake">
+                <div className="p-4 bg-rose-500/5 border border-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl text-xs flex gap-2.5 items-start">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{errorMessage}</span>
                 </div>
               )}
 
               {successMessage && (
-                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl text-xs flex gap-2 items-start">
-                  <CheckCircle className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" />
+                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl text-xs flex gap-3 items-start">
+                  <div className="p-1 bg-emerald-500/10 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-emerald-600" />
+                  </div>
                   <div>
-                    <p className="font-bold">{isRtl ? 'تم وضع الطلب بنجاح!' : 'Request Sent!'}</p>
-                    <p className="opacity-90 mt-1">{successMessage}</p>
+                    <p className="font-bold text-slate-850 dark:text-slate-100">{isRtl ? 'تم إرسال الطلب بنجاح!' : 'Booking Request Sent!'}</p>
+                    <p className="opacity-95 mt-1 leading-relaxed text-[11px]">{successMessage}</p>
                   </div>
                 </div>
               )}
 
-              {/* Form Input fields */}
               <div className="space-y-5">
                 {/* 1. Pick Date */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-450 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
-                    {t.selectDate} <span className="text-red-500">*</span>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-455 dark:text-slate-400 uppercase tracking-wide">
+                    {t.selectDate} <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <input
                       type="date"
                       required
+                      id="booking-datepicker"
                       min={limits.min}
                       max={limits.max}
                       value={selectedDate}
@@ -222,28 +261,30 @@ export default function StudentBooking({
                         setSelectedSlot('');
                         setErrorMessage('');
                       }}
-                      className="w-full p-2.5 rounded-full border border-slate-300 dark:border-slate-800 bg-transparent text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all px-4"
+                      className={`w-full p-3 rounded-xl border bg-transparent text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all px-4 ${
+                        theme === 'dark' ? 'border-slate-800 focus:bg-slate-950/40' : 'border-slate-200 focus:bg-slate-50/20'
+                      }`}
                     />
                   </div>
                 </div>
 
                 {/* Weekend Closed Warning */}
                 {selectedDate && isWeekend && (
-                  <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-2xl text-xs flex gap-2 items-center text-red-650 dark:text-red-400">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <div className="p-3.5 bg-rose-500/5 border border-rose-500/10 rounded-2xl text-xs flex gap-2.5 items-center text-rose-600 dark:text-rose-400">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
                     <span>{t.outOfRange}</span>
                   </div>
                 )}
 
                 {/* 2. Pick Slot */}
                 {selectedDate && !isWeekend && (
-                  <div className="space-y-3 animate-fade-in">
-                    <label className="block text-xs font-bold text-slate-450 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
-                      {t.selectTime} <span className="text-red-500">*</span>
+                  <div className="space-y-3.5 animate-fade-in">
+                    <label className="block text-xs font-bold text-slate-455 dark:text-slate-400 uppercase tracking-wide">
+                      {t.selectTime} <span className="text-rose-500">*</span>
                     </label>
 
                     {activeSlotsForDay.length === 0 ? (
-                      <p className="text-xs text-amber-600 italic bg-amber-500/5 p-3 rounded-2xl border border-amber-500/10">
+                      <p className="text-xs text-amber-600 italic bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10 leading-relaxed">
                         {isRtl 
                           ? 'لا توجد فترات استقبال معلنة للمدير في هذا اليوم حالياً، يرجى اختيار تاريخ آخر.' 
                           : 'No reception slots configured for this day currently, try another date.'}
@@ -261,23 +302,23 @@ export default function StudentBooking({
                               type="button"
                               disabled={isFull}
                               onClick={() => setSelectedSlot(timeString)}
-                              className={`p-4 rounded-2xl border text-left transition-all duration-200 relative flex items-center justify-between ${
+                              className={`p-4 rounded-2xl border text-left transition-all duration-200 relative flex items-center justify-between group ${
                                 isFull
-                                  ? 'bg-slate-100 dark:bg-slate-950/40 border-slate-200 dark:border-slate-900 text-slate-400 cursor-not-allowed'
+                                  ? 'bg-slate-100/50 dark:bg-slate-950/10 border-slate-200/50 dark:border-slate-900 text-slate-400 cursor-not-allowed'
                                   : selectedSlot === timeString
-                                  ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500/30 shadow-md'
-                                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50/40 dark:hover:bg-slate-900/40 bg-transparent'
+                                  ? 'border-blue-500 bg-blue-500/5 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500 shadow-md'
+                                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-400 hover:bg-slate-50/30 dark:hover:bg-slate-900/40 bg-transparent'
                               }`}
                             >
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2.5">
                                 <Clock className={`w-4 h-4 ${selectedSlot === timeString ? 'text-blue-600' : 'text-slate-400'}`} />
                                 <span className="font-mono text-xs font-bold">{timeString}</span>
                               </div>
                               <div className="text-right text-[10px]">
                                 {isFull ? (
-                                  <span className="text-red-500 font-bold px-2.5 py-0.5 bg-red-100/50 dark:bg-red-950/30 rounded-full">{isRtl ? 'ممتلئ' : 'Full'}</span>
+                                  <span className="text-rose-500 font-bold px-2.5 py-0.5 bg-rose-500/10 rounded-full">{isRtl ? 'ممتلئ' : 'Full'}</span>
                                 ) : (
-                                  <span className="text-slate-500 dark:text-slate-300 font-bold px-2 py-0.5 bg-slate-100 dark:bg-slate-950 rounded font-sans">
+                                  <span className="text-slate-500 dark:text-slate-300 font-bold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-sans">
                                     {isRtl ? `المحجوز: ${currentBookings}/${slot.maxCapacity}` : `Booked: ${currentBookings}/${slot.maxCapacity}`}
                                   </span>
                                 )}
@@ -291,9 +332,9 @@ export default function StudentBooking({
                 )}
 
                 {/* 3. Reason for Visit */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-450 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
-                    {t.reasonForVisit} <span className="text-red-500">*</span>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-455 dark:text-slate-400 uppercase tracking-wide">
+                    {t.reasonForVisit} <span className="text-rose-500">*</span>
                   </label>
                   <textarea
                     required
@@ -301,15 +342,17 @@ export default function StudentBooking({
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     placeholder={t.reasonPlaceholder}
-                    className="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-800 bg-transparent text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none leading-relaxed transition-all"
+                    className={`w-full p-4 rounded-2xl border bg-transparent text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none leading-relaxed transition-all ${
+                      theme === 'dark' ? 'border-slate-800 focus:bg-slate-950/20' : 'border-slate-200 focus:bg-slate-50/20'
+                    }`}
                   />
                 </div>
               </div>
 
-              {/* Submit Trigger - Sleek signature blue active button with shadow */}
+              {/* Submit Button - Elevated Custom Shadow */}
               <button
                 type="submit"
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-all shadow-xl shadow-blue-500/20 hover:shadow-blue-500/30 flex items-center justify-center gap-2 text-sm"
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-extrabold rounded-full transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 flex items-center justify-center gap-2 text-xs"
               >
                 <Send className="w-4 h-4" />
                 <span>{t.clickToBook}</span>
@@ -318,59 +361,83 @@ export default function StudentBooking({
           )}
         </div>
 
-        {/* Right Column: Dynamic Scheduler Side Panel - Sleek rounded cards */}
+        {/* Right Column: Dynamic Scheduler Side Panel - SaaS aesthetic */}
         <div className="space-y-6">
-          {/* Working Days Card */}
-          <div className={`p-6 rounded-3xl border transition-all duration-300 ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-4`}>
-            <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-blue-600" />
-              <span>{isRtl ? 'أيام وساعات العمل الرسمية' : 'Institute Office Hours'}</span>
-            </h4>
-            <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed border-b border-slate-100 dark:border-slate-850 pb-3">
-              {isRtl 
-                ? 'يستقبل مدير المعهد الطلاب في أيام العمل الرسمية من الأحد إلى الخميس، بناء على المواعيد المعتمدة والأنصبة المتاحة للجدولة الأكاديمية.'
-                : 'The director welcomes students during official days from Sunday to Thursday based on verified digital appointment queues.'}
+          {/* Working Hours Card */}
+          <div className={`p-6 rounded-3xl border transition-all duration-300 ${
+            theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-150'
+          } shadow-sm space-y-4`}>
+            <div className="flex items-center gap-2.5 pb-1">
+              <div className="p-1.5 bg-blue-500/15 text-blue-600 rounded-lg">
+                <CalendarIcon className="w-4.5 h-4.5" />
+              </div>
+              <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">
+                {isRtl ? 'أيام وساعات العمل الرسمية' : 'Institute Office Hours'}
+              </h4>
             </div>
             
-            {/* Days list */}
-            <div className="text-xs space-y-2.5 font-sans">
-              <div className="flex justify-between items-center text-slate-600 dark:text-slate-300 font-bold">
-                <span className="font-semibold">{t.sunday} - {t.thursday}</span>
-                <span className="font-bold text-blue-600 font-mono bg-blue-100/50 dark:bg-blue-900/20 px-2 py-0.5 rounded">09:00 AM - 03:00 PM</span>
+            <p className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed border-b border-slate-100 dark:border-slate-850 pb-4 font-medium">
+              {isRtl 
+                ? 'يستقبل مدير المعهد الطلاب في أيام العمل الرسمية من الأحد إلى الخميس، بناء على المواعيد المعتمدة والأنصبة المتاحة للجدولة الأكاديمية.'
+                : 'The director welcomes student receptions during standard working days. Appointments require virtual identity validations before final scheduler locks.'}
+            </p>
+            
+            <div className="text-xs space-y-3 font-sans font-medium">
+              <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
+                <span className="font-bold">{t.sunday} - {t.thursday}</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400 font-mono bg-blue-100/40 dark:bg-blue-900/20 px-2.5 py-1 rounded">
+                  09:00 AM - 03:00 PM
+                </span>
               </div>
-              <div className="flex justify-between items-center text-slate-450">
+              <div className="flex justify-between items-center text-slate-400">
                 <span>{t.friday} - {t.saturday}</span>
-                <span className="italic text-red-500 text-[10px] font-bold bg-red-100/50 dark:bg-red-950/20 px-2 py-0.5 rounded">{isRtl ? 'مغلق (عطلة نهاية الأسبوع)' : 'Closed (Weekend)'}</span>
+                <span className="italic text-rose-500 text-[10px] font-bold bg-rose-500/10 px-2.5 py-1 rounded">
+                  {isRtl ? 'مغلق (نهاية الأسبوع)' : 'Closed (Weekend)'}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Verification Protocol Notice */}
-          <div className={`p-6 rounded-3xl border transition-all duration-300 ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-2`}>
-            <div className="flex gap-2 text-slate-705 dark:text-slate-200 text-xs">
-              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">{isRtl ? 'بروتوكول التحقق الثنائي (Two-Factor Verify):' : 'Bilingual Verification Safeguard:'}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+          <div className={`p-6 rounded-3xl border transition-all duration-300 ${
+            theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80' : 'bg-white border-slate-150'
+          } shadow-sm space-y-3`}>
+            <div className="flex gap-3 items-start">
+              <div className="p-1 bg-emerald-500/10 text-emerald-600 rounded-lg shrink-0 mt-0.5">
+                <CheckCircle className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-extrabold text-xs text-slate-800 dark:text-slate-100">
+                  {isRtl ? 'بروتوكول تفعيل المواعيد تلقائياً' : 'Two-Step Verification Loop'}
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-450 leading-relaxed font-medium">
                   {isRtl
-                    ? 'بعد تقديم طلبك، سنقوم فوراً بإرسال رسالة بريد إلكتروني تحتوي على رابط تأكيد المقابلة. يجب النقر على الرابط لتأكيد الموعد وإدراجه في جدول المدير، لتجنب إلغاء الحجز تلقائياً.'
-                    : 'Once you trigger a booking, a bilingual transaction validation notification is shot to your inbox. Tap the button to verify identity and assert slot registry in the director\'s database.'}
+                    ? 'بعد تقديم طلبك، سنقوم فوراً بإرسال رسالة بريد إلكتروني تحتوي على زر تفعيل المقابلة. يجب النقر على الرابط لتأكيد الموعد وإدراجه في جدول المدير رسمياً.'
+                    : 'Once scheduled, a secure token verification payload is sent to your email. Click confirm inside the Virtual student box below to validate and register.'}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* GDPR Compliance Card - Sleek dark layout matching the server status in the theme */}
-          <div className="p-6 bg-slate-900 text-white rounded-3xl space-y-3 border border-slate-800 shadow-xl shadow-slate-900/10">
-            <h5 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">{isRtl ? 'مكافحة الهجمات وحماية البيانات' : 'Anti-Spam & GDPR Safeguards'}</h5>
-            <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+          {/* GDPR & Security Pulse Box - Dark Premium Accent */}
+          <div className="p-6 bg-slate-900 text-white rounded-3xl space-y-4 border border-slate-800 shadow-xl shadow-slate-950/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              <h5 className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest">
+                {isRtl ? 'مكافحة السبام وحماية الخصوصية' : 'Anti-Spam & GDPR Safeguards'}
+              </h5>
+            </div>
+            
+            <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
               {isRtl 
                 ? 'يقتصر تسجيل الحصص على حسابات الطلبة الرسمية الموثقة برقم الهاتف والبريد الأكاديمي، بما يضمن عدم شغل الفترات عشوائياً وتفادي هجمات Denial of Wallet أو إغراق بريد المعهد برزم عشوائية.'
-                : 'Booking access is mathematically rate-limited to authenticated college credentials preventing wallet-draining API sweeps or schedule spamming.'}
+                : 'Scheduler limits entries based on college IDs and mobile SMS tags. This protects scheduling assets against malicious flooding or automated sweeps.'}
             </p>
-            <div className="flex items-center gap-2 pt-2 border-t border-slate-800 text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-              <span>{isRtl ? 'قاعدة البيانات محمية ومؤمنة بالكامل' : 'Database fully encrypted'}</span>
+
+            <div className="flex items-center gap-2.5 pt-3 border-t border-slate-800 text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-450 animate-pulse" />
+              <span>{isRtl ? 'قاعدة البيانات آمنة بالكامل' : 'Encryption Channel is Live'}</span>
             </div>
           </div>
         </div>

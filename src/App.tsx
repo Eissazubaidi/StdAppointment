@@ -37,7 +37,11 @@ export default function App() {
 
   const [theme, setTheme] = useState<Theme>(() => {
     const cached = localStorage.getItem('inst_theme');
-    return (cached as Theme) || 'light';
+    if (cached) return cached as Theme;
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
   });
 
   // State to track connected Gmail configuration
@@ -152,10 +156,15 @@ export default function App() {
     initDbAndState();
   }, []);
 
-  // Keep state synchronized with LocalStorage
+  // Keep state synchronized with LocalStorage & Document Root (No theme flash)
   useEffect(() => {
     localStorage.setItem('inst_lang', lang);
     localStorage.setItem('inst_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [lang, theme]);
 
   // Synchronize dynamic lists to LocalStorage (as cache fallback)

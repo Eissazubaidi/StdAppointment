@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { Lang, Theme, User, Appointment } from '../types';
+import { Lang, Theme, Appointment, User, UserRole } from '../types';
 import { translations } from '../translations';
-import { UserPlus, LogIn, Mail, Phone, Lock, User as UserIcon, LogOut, CheckCircle, Clock, XCircle, ChevronRight, AlertCircle, Info, ShieldAlert } from 'lucide-react';
+import { 
+  User as UserIcon, LogIn, UserPlus, Mail, Phone, Lock, ChevronRight, 
+  AlertCircle, CheckCircle, Clock, Info, ShieldAlert, LogOut, ShieldCheck 
+} from 'lucide-react';
 
 interface StudentPortalProps {
   lang: Lang;
   theme: Theme;
   currentUser: User | null;
   appointments: Appointment[];
-  onLogin: (email: string, role: 'student' | 'director', password?: string) => boolean;
+  onLogin: (email: string, role: UserRole, password?: string) => boolean;
   onRegister: (name: string, email: string, phone: string, password?: string) => void;
   onLogout: () => void;
   onCancelAppointment: (appointmentId: string) => void;
   onVerifyEmail: (email: string) => void;
-  onUpdateProfile?: (name: string, phone: string, password?: string) => void;
+  onUpdateProfile: (name: string, phone: string, password?: string) => void;
 }
 
 export default function StudentPortal({
@@ -31,16 +34,16 @@ export default function StudentPortal({
   const t = translations[lang];
   const isRtl = lang === 'ar';
 
-  // Toggle modes
+  // State
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
 
-  // Profile editing state
+  // Profile editing
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(currentUser?.name || '');
   const [editPhone, setEditPhone] = useState<string>(currentUser?.phone || '');
@@ -51,51 +54,46 @@ export default function StudentPortal({
     if (currentUser) {
       setEditName(currentUser.name);
       setEditPhone(currentUser.phone);
-      setEditPassword(currentUser.password || '');
+      setEditPassword('');
       setIsEditingProfile(true);
+      setProfileSuccessMsg('');
     }
   };
 
   const handleSaveProfile = () => {
     if (!editName.trim()) {
-      alert(isRtl ? 'الرجاء إدخال الاسم كاملاً' : 'Name is required');
+      setProfileSuccessMsg(isRtl ? 'الاسم لا يمكن أن يكون فارغاً.' : 'Name is required.');
       return;
     }
-    if (onUpdateProfile) {
-      onUpdateProfile(editName.trim(), editPhone.trim(), editPassword.trim() || undefined);
-      setProfileSuccessMsg(isRtl ? 'تم تحديث بيانات الحساب بنجاح!' : 'Profile updated successfully!');
-      setTimeout(() => {
-        setProfileSuccessMsg('');
-        setIsEditingProfile(false);
-      }, 2000);
-    }
+    onUpdateProfile(editName.trim(), editPhone.trim(), editPassword.trim() || undefined);
+    setProfileSuccessMsg(isRtl ? '✓ تم حفظ التعديلات بنجاح!' : '✓ Profile updated!');
+    setTimeout(() => {
+      setProfileSuccessMsg('');
+      setIsEditingProfile(false);
+    }, 2000);
   };
 
   // Handle Login submission
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-    
-    if (!email.trim()) {
-      setErrorMessage(isRtl ? 'يرجى إدخال بريدك الإلكتروني.' : 'Please input your email.');
+    setSuccessMessage('');
+
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMessage(isRtl ? 'يرجى إدخال بريد إلكتروني صحيح.' : 'Please enter a valid email.');
       return;
     }
 
-    // Determine role: simple trick, if the email is director@institute.edu.sa, they log in as director
-    const isDirector = email.toLowerCase() === 'director@institute.edu.sa';
-    const role = isDirector ? 'director' : 'student';
+    const isDirector = email.toLowerCase().trim() === 'director@institute.edu.sa';
+    const role: UserRole = isDirector ? 'director' : 'student';
 
     const success = onLogin(email.trim(), role, password);
-
     if (!success) {
       setErrorMessage(
         isRtl 
-          ? 'خطأ في البريد الإلكتروني أو كلمة المرور! يرجى التحقق وإعادة المحاولة.' 
-          : 'Incorrect email or password! Please check and try again.'
+          ? 'عذراً! لم نعثر على حساب بهذا البريد وكلمة المرور المسجلة.' 
+          : 'Invalid credentials. Please verify your email and password.'
       );
-    } else {
-      setSuccessMessage(isRtl ? 'تم تسجيل الدخول بنجاح!' : 'Logged in successfully!');
-      setTimeout(() => setSuccessMessage(''), 2500);
     }
   };
 
@@ -103,27 +101,32 @@ export default function StudentPortal({
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setSuccessMessage('');
 
     if (!name.trim()) {
       setErrorMessage(isRtl ? 'يرجى إدخال اسمك الكامل.' : 'Please enter your full name.');
       return;
     }
     if (!email.trim() || !email.includes('@')) {
-      setErrorMessage(isRtl ? 'يرجى إدخال بريد إلكتروني جامعي صحيح.' : 'Please enter a valid academic email.');
+      setErrorMessage(isRtl ? 'يرجى إدخال بريد إلكتروني صحيح.' : 'Please enter a valid academic email.');
       return;
     }
     if (!phone.trim()) {
-      setErrorMessage(isRtl ? 'يرجى إدخال رقم جوالك لتلقي تنبيهات SMS.' : 'Please enter your mobile phone for SMS alerts.');
+      setErrorMessage(isRtl ? 'يرجى إدخال رقم جوالك لتلقي التنبيهات.' : 'Please enter your phone number.');
+      return;
+    }
+    if (!password || password.length < 4) {
+      setErrorMessage(isRtl ? 'يرجى إدخال كلمة مرور بطول 4 خانات على الأقل.' : 'Password must be at least 4 characters.');
       return;
     }
 
     onRegister(name.trim(), email.trim(), phone.trim(), password);
     setSuccessMessage(isRtl ? 'تم إنشاء الحساب بنجاح! يرجى النقر على رابط التفعيل في صندوق البريد الجامعي الموضح أدناه.' : 'Account registered! Please click the activation link in the Student Virtual Inbox at the bottom of the page.');
     
-    // Switch to login or clear fields
     setName('');
     setEmail('');
     setPhone('');
+    setPassword('');
     setIsRegistering(false);
   };
 
@@ -133,68 +136,84 @@ export default function StudentPortal({
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in theme-transition">
       {currentUser ? (
         // Logged in View
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* User Profile Summary */}
-          <div className={`p-6 rounded-3xl border ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-5`}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* User Profile Summary Card */}
+          <div className={`p-6 rounded-3xl border transition-all duration-300 ${
+            theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80 shadow-md' : 'bg-white border-slate-150 shadow-sm'
+          } space-y-6 h-fit`}>
             <div className="flex items-center gap-4">
-              <div className="bg-blue-600/10 text-blue-600 dark:text-blue-400 p-3 rounded-2xl">
+              <div className="bg-blue-600/10 text-blue-600 dark:text-blue-400 p-3 rounded-2xl shrink-0">
                 <UserIcon className="w-8 h-8" />
               </div>
-              <div className="space-y-0.5">
-                <div className="inline-flex items-center gap-1 text-[10px] bg-indigo-50 dark:bg-indigo-950/45 text-indigo-600 px-2.5 py-0.5 rounded-full font-bold">
+              <div className="space-y-1 min-w-0">
+                <div className="inline-flex items-center gap-1 text-[9px] bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full font-extrabold uppercase">
                   <span>{currentUser.role === 'director' ? t.director : t.student}</span>
                 </div>
-                <h3 className="font-bold text-base text-slate-800 dark:text-slate-100">{currentUser.name}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-300 font-mono leading-none">{currentUser.email}</p>
+                <h3 className="font-extrabold text-base text-slate-850 dark:text-slate-100 truncate">{currentUser.name}</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-mono truncate leading-none">{currentUser.email}</p>
               </div>
             </div>
 
             {isEditingProfile ? (
-              <div className="space-y-3.5 pt-2 border-t border-slate-150 dark:border-slate-850">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase">{isRtl ? 'الاسم الجديد للمستخدم:' : 'New Display Name:'}</label>
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-850 animate-fade-in">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-455 dark:text-slate-400 block uppercase tracking-wider">
+                    {isRtl ? 'الاسم الجديد للمستخدم:' : 'New Display Name:'}
+                  </label>
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className={`w-full text-xs p-2.5 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                    className={`w-full text-xs p-2.5 rounded-xl border bg-transparent focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
+                      theme === 'dark' ? 'border-slate-800 text-slate-100 focus:bg-slate-950/20' : 'border-slate-200 text-slate-800 focus:bg-slate-50/20'
+                    }`}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase">{isRtl ? 'رقم هاتف التنبيهات:' : 'SMS Alert Phone:'}</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-455 dark:text-slate-400 block uppercase tracking-wider">
+                    {isRtl ? 'رقم هاتف التنبيهات:' : 'SMS Alert Phone:'}
+                  </label>
                   <input
                     type="text"
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
-                    className={`w-full text-xs p-2.5 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                    className={`w-full text-xs p-2.5 rounded-xl border bg-transparent focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
+                      theme === 'dark' ? 'border-slate-800 text-slate-100 focus:bg-slate-950/20' : 'border-slate-200 text-slate-800 focus:bg-slate-50/20'
+                    }`}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase">{isRtl ? 'كلمة المرور الجديدة:' : 'New Password:'}</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-455 dark:text-slate-400 block uppercase tracking-wider">
+                    {isRtl ? 'كلمة المرور الجديدة:' : 'New Password:'}
+                  </label>
                   <input
                     type="password"
                     value={editPassword}
                     onChange={(e) => setEditPassword(e.target.value)}
-                    placeholder={isRtl ? 'كلمة المرور الجديدة' : 'New password'}
-                    className={`w-full text-xs p-2.5 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                    placeholder={isRtl ? 'أدخل كلمة مرور جديدة' : 'Type new password'}
+                    className={`w-full text-xs p-2.5 rounded-xl border bg-transparent focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
+                      theme === 'dark' ? 'border-slate-800 text-slate-100 focus:bg-slate-950/20' : 'border-slate-200 text-slate-800 focus:bg-slate-50/20'
+                    }`}
                   />
                 </div>
+                
                 {profileSuccessMsg && (
-                  <p className="text-[10px] text-green-500 dark:text-green-400 font-bold">{profileSuccessMsg}</p>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{profileSuccessMsg}</p>
                 )}
-                <div className="flex gap-2 pt-1">
+                
+                <div className="flex gap-2.5 pt-1.5">
                   <button
                     onClick={handleSaveProfile}
-                    className="flex-1 bg-blue-650 hover:bg-blue-700 text-white text-[11px] font-bold py-1.5 px-3 rounded-xl transition"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-97 text-white text-[11px] font-extrabold py-2 px-3 rounded-xl transition"
                   >
-                    {isRtl ? 'حفظ' : 'Save'}
+                    {isRtl ? 'حفظ التعديل' : 'Save'}
                   </button>
                   <button
                     onClick={() => setIsEditingProfile(false)}
-                    className="flex-1 bg-slate-250 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold py-1.5 px-3 rounded-xl transition"
+                    className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 text-[11px] font-bold py-2 px-3 rounded-xl transition"
                   >
                     {isRtl ? 'إلغاء' : 'Cancel'}
                   </button>
@@ -202,21 +221,21 @@ export default function StudentPortal({
               </div>
             ) : (
               <>
-                <div className="border-t border-slate-150 dark:border-slate-850 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <div className="border-t border-slate-100 dark:border-slate-850 pt-4 space-y-3 text-xs text-slate-650 dark:text-slate-300 font-medium">
                   <div className="flex justify-between">
                     <span>{isRtl ? 'هاتف التنبيهات SMS:' : 'SMS Alert Contact:'}</span>
-                    <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{currentUser.phone}</span>
+                    <span className="font-mono font-bold text-slate-800 dark:text-slate-100">{currentUser.phone}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span>{isRtl ? 'حالة الحساب:' : 'Account Status:'}</span>
                     <span>
                       {currentUser.isVerified ? (
-                        <span className="bg-green-105 text-green-700 dark:bg-green-950/40 dark:text-green-300 font-bold px-2.5 py-0.5 rounded-full border border-green-500/10">
-                          {isRtl ? 'مؤكد ونشط' : 'Verified & Active'}
+                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/10">
+                          {isRtl ? 'نشط ومعتمد' : 'Verified & Active'}
                         </span>
                       ) : (
-                        <span className="bg-amber-105 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/10">
-                          {isRtl ? 'غير مؤكد' : 'Unconfirmed'}
+                        <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/10">
+                          {isRtl ? 'معلق البريد' : 'Unconfirmed'}
                         </span>
                       )}
                     </span>
@@ -225,7 +244,7 @@ export default function StudentPortal({
 
                 <button
                   onClick={startEditing}
-                  className="w-full text-xs py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-750 dark:text-slate-300 font-bold rounded-xl transition border border-slate-200/40 dark:border-slate-800"
+                  className="w-full text-xs py-2.5 bg-slate-100/70 hover:bg-slate-200/70 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-750 dark:text-slate-200 font-bold rounded-xl transition border border-slate-200/30 dark:border-slate-800"
                 >
                   {isRtl ? 'تعديل بيانات الحساب ✎' : 'Edit Account Info ✎'}
                 </button>
@@ -233,28 +252,28 @@ export default function StudentPortal({
             )}
 
             {!currentUser.isVerified && (
-              <div className="p-4 bg-amber-500/5 border border-amber-500/15 rounded-2xl space-y-3 animate-pulse">
-                <div className="flex gap-1.5 text-amber-600 dark:text-amber-400 text-xs font-bold items-center">
-                  <ShieldAlert className="w-4 h-4 shrink-0" />
+              <div className="p-4 bg-amber-500/5 border border-amber-500/15 rounded-2xl space-y-3">
+                <div className="flex gap-2 text-amber-600 dark:text-amber-400 text-xs font-bold items-center">
+                  <ShieldAlert className="w-4.5 h-4.5 shrink-0" />
                   <span>{isRtl ? 'تفعيل البريد الأكاديمي معلق' : 'Academic Verification Pending'}</span>
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="text-[10px] text-slate-500 dark:text-slate-450 leading-relaxed font-medium">
                   {isRtl 
-                    ? 'لكي تتمكن من تأكيد طلبات المقابلات بنجاح، انزل لأسفل الصفحة (صندوق البريد الافتراضي) واضغط على زر "تفعيل حسابك" مباشرة.'
-                    : 'Please scroll down to the Virtual Student Inbox and click "Confirm Account" to establish full scheduler permissions.'}
+                    ? 'لكي تتمكن من حجز المقابلات وتفعيل الموعد، يرجى النزول لأسفل الصفحة (صندوق البريد الافتراضي) واضغط على زر "تأكيد بريدك" لتفعيل حسابك تلقائياً.'
+                    : 'Scroll to the Student Virtual Inbox below and click "Confirm Account" to unlock full scheduling capabilities.'}
                 </p>
                 <button
                   onClick={() => onVerifyEmail(currentUser.email)}
-                  className="w-full text-[10px] font-bold bg-amber-600 hover:bg-amber-700 text-white py-1.5 rounded-xl transition shadow-sm"
+                  className="w-full text-[10px] font-black bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-xl transition shadow-xs"
                 >
-                  {isRtl ? 'تجريد محاكاة التفعيل الفوري' : 'Automate verification code'}
+                  {isRtl ? 'محاكاة التفعيل البريدي التلقائي' : 'Automate verification code'}
                 </button>
               </div>
             )}
 
             <button
               onClick={onLogout}
-              className="w-full py-2.5 px-4 rounded-xl text-center flex items-center justify-center gap-2 border border-red-500/10 text-red-600 hover:bg-red-500/5 transition text-xs font-bold"
+              className="w-full py-2.5 px-4 rounded-xl text-center flex items-center justify-center gap-2 border border-rose-500/15 text-rose-600 dark:text-rose-450 hover:bg-rose-500/5 transition text-xs font-bold"
             >
               <LogOut className="w-4 h-4" />
               <span>{t.logout}</span>
@@ -262,97 +281,107 @@ export default function StudentPortal({
           </div>
 
           {/* User Appointments Track Panel */}
-          <div className={`lg:col-span-2 p-6 rounded-3xl border ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-sm space-y-4`}>
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-850 pb-3">
-              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
-                {t.recentAppointments}
-              </h3>
-              <span className="bg-blue-100 dark:bg-blue-900/35 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full text-xs font-mono font-bold">
+          <div className={`lg:col-span-2 p-6 sm:p-8 rounded-3xl border transition-all duration-300 ${
+            theme === 'dark' ? 'bg-slate-900/60 border-slate-800/80 shadow-md' : 'bg-white border-slate-150 shadow-sm'
+          } space-y-5`}>
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-850 pb-4">
+              <div className="flex items-center gap-2.5">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <h3 className="font-extrabold text-base sm:text-lg text-slate-850 dark:text-slate-100">
+                  {t.recentAppointments}
+                </h3>
+              </div>
+              <span className="bg-blue-100/50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-mono font-black">
                 {studentAppointments.length}
               </span>
             </div>
 
             {studentAppointments.length === 0 ? (
-              <div className="text-center py-12 text-slate-450 text-xs">
-                <Clock className="w-12 h-12 mx-auto mb-2 opacity-20 text-slate-500" />
-                <p>{t.noAppointmentsYet}</p>
+              <div className="text-center py-16 text-slate-400 text-xs space-y-3">
+                <Clock className="w-14 h-14 mx-auto opacity-20 text-slate-500" />
+                <p className="font-bold">{t.noAppointmentsYet}</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {studentAppointments.map((apt) => {
                   const statusColors = {
-                    pending_email: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-200/55',
-                    confirmed: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200/55',
-                    cancelled: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border-red-200/55',
-                    completed: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border-indigo-200/55'
+                    pending_email: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                    confirmed: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+                    cancelled: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+                    completed: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
                   };
 
                   return (
                     <div
                       key={apt.id}
-                      className={`p-5 rounded-2xl border transition ${
-                        theme === 'dark' ? 'bg-slate-950/40 border-slate-800 hover:border-slate-750' : 'bg-slate-50/70 border-slate-200/50 hover:border-slate-300'
+                      className={`p-5 rounded-2xl border transition-all duration-250 ${
+                        theme === 'dark' ? 'bg-slate-950/40 border-slate-850/80' : 'bg-slate-50/50 border-slate-150/50'
                       }`}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-0.5 rounded">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono text-xs font-black text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-lg">
                             {apt.id}
                           </span>
-                          <span className="text-slate-400 text-[10px]">
+                          <span className="text-slate-400 text-[10px] font-medium font-sans">
                             {new Date(apt.createdAt).toLocaleString(isRtl ? 'ar' : 'en')}
                           </span>
                         </div>
-                        <span className={`px-2.5 py-0.5 rounded text-xs font-bold border ${statusColors[apt.status]}`}>
+                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase border ${statusColors[apt.status]}`}>
                           {t[apt.status]}
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-xs bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-850 my-2">
+                      <div className={`grid grid-cols-2 gap-4 text-xs p-3.5 rounded-xl border my-3 ${
+                        theme === 'dark' ? 'bg-slate-900 border-slate-850' : 'bg-white border-slate-100'
+                      }`}>
                         <div>
-                          <div className="text-slate-400 text-[10px]">{t.date}</div>
-                          <div className="font-bold text-slate-800 dark:text-slate-100 mt-0.5">{apt.date}</div>
+                          <div className="text-slate-400 text-[9px] font-bold uppercase">{t.date}</div>
+                          <div className="font-black text-slate-800 dark:text-slate-100 mt-0.5">{apt.date}</div>
                         </div>
                         <div>
-                          <div className="text-slate-400 text-[10px]">{t.time}</div>
-                          <div className="font-bold text-slate-800 dark:text-slate-100 mt-0.5">{apt.timeSlot}</div>
+                          <div className="text-slate-400 text-[9px] font-bold uppercase">{t.time}</div>
+                          <div className="font-black text-slate-800 dark:text-slate-100 mt-0.5">{apt.timeSlot}</div>
                         </div>
                       </div>
 
-                      <div className="text-xs text-slate-700 dark:text-slate-300 bg-slate-100/30 dark:bg-slate-950/60 p-2.5 rounded-xl my-2 leading-relaxed border border-slate-100/50 dark:border-slate-850">
-                        <span className="font-bold block text-[10px] text-slate-400 uppercase mb-0.5">{isRtl ? 'غرض المقابلة:' : 'Reason for entry:'}</span>
-                        {apt.reason}
+                      <div className={`text-xs p-3.5 rounded-xl my-3 leading-relaxed border ${
+                        theme === 'dark' ? 'bg-slate-950/60 border-slate-850' : 'bg-slate-100/30 border-slate-100'
+                      }`}>
+                        <span className="font-black block text-[9px] text-slate-400 uppercase tracking-wide mb-1">{isRtl ? 'غرض المقابلة:' : 'Reason for entry:'}</span>
+                        <p className="text-slate-700 dark:text-slate-300 font-medium">{apt.reason}</p>
                       </div>
 
                       {apt.managerNotes && (
-                        <div className="p-3 bg-blue-500/5 dark:bg-blue-950/20 border border-blue-500/10 rounded-xl text-xs space-y-1 my-2">
-                          <span className="font-bold text-blue-600 block text-[10px]">{isRtl ? 'توجيه وملاحظات المدير:' : 'Director Executive Notes:'}</span>
-                          <p className="text-slate-700 dark:text-slate-300 italic">“{apt.managerNotes}”</p>
+                        <div className="p-3.5 bg-blue-500/5 border border-blue-500/10 rounded-xl text-xs space-y-1.5 my-3">
+                          <span className="font-extrabold text-blue-600 block text-[9px] uppercase tracking-wider">
+                            {isRtl ? 'توجيه وملاحظات المدير الإداري:' : 'Director Executive Notes:'}
+                          </span>
+                          <p className="text-slate-700 dark:text-slate-300 italic font-medium">“{apt.managerNotes}”</p>
                         </div>
                       )}
 
-                      {/* Display warning or actions */}
-                      <div className="mt-3.5 flex flex-wrap gap-2 justify-between items-center pt-2.5 border-t border-slate-150 dark:border-slate-850 text-xs">
+                      <div className="mt-4 flex flex-wrap gap-2.5 justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-850 text-xs">
                         {apt.status === 'pending_email' ? (
-                          <div className="flex gap-1.5 items-center text-amber-600 bg-amber-500/5 p-1.5 rounded-lg text-[11px] font-sans">
+                          <div className="flex gap-2 items-center text-amber-600 bg-amber-500/5 p-2 rounded-xl text-[11px] font-semibold border border-amber-500/10">
                             <Info className="w-4 h-4 shrink-0 text-amber-500" />
                             <span>
                               {isRtl 
                                 ? 'يرجى تفعيل الموعد من صندوق البريد أسفل الصفحة للتأكيد.' 
-                                : 'Please look down inside the mock email box to confirm.'}
+                                : 'Awaiting confirmation in virtual email sandbox below.'}
                             </span>
                           </div>
                         ) : (
-                          <div className="flex gap-1 items-center text-emerald-600">
+                          <div className="flex gap-1.5 items-center text-emerald-600 bg-emerald-500/5 p-2 rounded-xl text-[11px] font-bold border border-emerald-500/10">
                             <CheckCircle className="w-4 h-4" />
-                            <span className="font-sans font-bold">{isRtl ? 'تم الاتصال بالمدير' : 'Linked with Manager'}</span>
+                            <span>{isRtl ? 'الموعد مجدول وفعال' : 'Session is Scheduled'}</span>
                           </div>
                         )}
 
                         {apt.status !== 'cancelled' && apt.status !== 'completed' && (
                           <button
                             onClick={() => onCancelAppointment(apt.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold px-2.5 py-1 rounded transition shadow-sm"
+                            className="bg-rose-600 hover:bg-rose-700 active:scale-97 text-white text-[10px] font-black px-3 py-1.5 rounded-lg transition shadow-xs cursor-pointer"
                           >
                             {isRtl ? 'إلغاء الموعد' : 'Cancel appointment'}
                           </button>
@@ -366,64 +395,70 @@ export default function StudentPortal({
           </div>
         </div>
       ) : (
-        // Login / Register Form View
+        // Login / Register Form View - Premium Modern SaaS Glass Card
         <div className="max-w-md mx-auto">
-          <div className={`p-8 sm:p-10 rounded-3xl border ${theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} shadow-md space-y-6`}>
+          <div className={`p-8 sm:p-10 rounded-3xl border transition-all duration-350 ${
+            theme === 'dark' 
+              ? 'bg-gradient-to-br from-slate-900 via-slate-950 to-slate-950 border-slate-800/80 shadow-[0_8px_32px_rgba(0,0,0,0.3)]' 
+              : 'bg-white border-slate-150 shadow-[0_15px_40px_rgba(148,163,184,0.12)]'
+          } space-y-6 relative overflow-hidden`}>
             
-            {/* Header Icons & Title */}
-            <div className="text-center space-y-2">
-              <div className="mx-auto w-12 h-12 bg-blue-600/10 text-blue-600 rounded-2xl flex items-center justify-center">
+            <div className="absolute -top-16 -left-16 w-36 h-36 bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="text-center space-y-2.5">
+              <div className="mx-auto w-12 h-12 bg-blue-600/10 text-blue-600 rounded-2xl flex items-center justify-center shadow-xs">
                 {isRegistering ? <UserPlus className="w-5 h-5" /> : <LogIn className="w-5 h-5" />}
               </div>
-              <h2 className="text-xl font-black text-slate-850 dark:text-slate-100">
+              <h2 className="text-xl font-black text-slate-850 dark:text-slate-100 tracking-tight">
                 {isRegistering ? t.registerTitle : t.loginTitle}
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                 {isRtl 
-                  ? 'بوابة الطلاب الإلكترونية لتفعيل الخصوصية وترتيب المقابلات' 
+                  ? 'بوابة المعهد الإلكترونية الموحدة لترتيب المقابلات الأكاديمية' 
                   : 'Official portal for verifying student identities and bookings'}
               </p>
             </div>
 
             {errorMessage && (
-              <div className="p-3 bg-red-500/5 border border-red-500/10 text-red-600 dark:text-red-400 rounded-2xl text-xs flex gap-1.5 items-start">
+              <div className="p-3.5 bg-rose-500/5 border border-rose-500/10 text-rose-600 dark:text-rose-400 rounded-2xl text-xs flex gap-2 items-start animate-fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {successMessage && (
-              <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl text-xs flex gap-1.5 items-start">
-                <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
-                <span>{successMessage}</span>
+              <div className="p-3.5 bg-emerald-500/5 border border-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl text-xs flex gap-2.5 items-start animate-fade-in">
+                <CheckCircle className="w-4.5 h-4.5 shrink-0 mt-0.5 text-emerald-600" />
+                <span className="leading-relaxed">{successMessage}</span>
               </div>
             )}
 
-            {/* Form */}
             <form onSubmit={isRegistering ? handleRegisterSubmit : handleLoginSubmit} className="space-y-4">
               {isRegistering && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-450 dark:text-slate-400 mb-1">{t.name}</label>
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-455 dark:text-slate-400 mb-1">{t.name}</label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-450 pointer-events-none">
                       <UserIcon className="w-4 h-4" />
                     </span>
                     <input
                       type="text"
                       required
-                      placeholder={isRtl ? 'مثال: سلطان علي الحربي' : 'John Doe'}
+                      placeholder={isRtl ? 'سلطان علي الحربي' : 'John Doe'}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-full border border-slate-300 dark:border-slate-850 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      className={`w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl border bg-transparent focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
+                        theme === 'dark' ? 'border-slate-800 focus:bg-slate-950/20 text-slate-100' : 'border-slate-200 focus:bg-slate-50/20 text-slate-800'
+                      }`}
                     />
                   </div>
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-450 dark:text-slate-400 mb-1">{t.email}</label>
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-455 dark:text-slate-400 mb-1">{t.email}</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-450 pointer-events-none">
                     <Mail className="w-4 h-4" />
                   </span>
                   <input
@@ -432,25 +467,27 @@ export default function StudentPortal({
                     placeholder={
                       isRegistering 
                         ? (isRtl ? 'user@institute.edu.sa' : 'student@edu.sa') 
-                        : (isRtl ? 'البريد المسجل أو director@institute.edu.sa' : 'Your address')
+                        : (isRtl ? 'director@institute.edu.sa' : 'Your address')
                     }
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-full border border-slate-300 dark:border-slate-850 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    className={`w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl border bg-transparent focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
+                      theme === 'dark' ? 'border-slate-800 focus:bg-slate-950/20 text-slate-100' : 'border-slate-200 focus:bg-slate-50/20 text-slate-800'
+                    }`}
                   />
                 </div>
                 {!isRegistering && (
-                  <span className="text-[10px] text-slate-400 mt-1 block">
+                  <span className="text-[10px] text-slate-450 dark:text-slate-500 font-bold mt-1 block px-1">
                     🚀 {isRtl ? 'للوج كمدير استخدم: director@institute.edu.sa' : 'To log as director use: director@institute.edu.sa'}
                   </span>
                 )}
               </div>
 
               {isRegistering && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-450 dark:text-slate-400 mb-1">{t.phone}</label>
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-455 dark:text-slate-400 mb-1">{t.phone}</label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-450 pointer-events-none">
                       <Phone className="w-4 h-4" />
                     </span>
                     <input
@@ -459,16 +496,18 @@ export default function StudentPortal({
                       placeholder="+96650XXXXXXX"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-full border border-slate-300 dark:border-slate-850 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      className={`w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl border bg-transparent focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
+                        theme === 'dark' ? 'border-slate-800 focus:bg-slate-950/20 text-slate-100' : 'border-slate-200 focus:bg-slate-50/20 text-slate-800'
+                      }`}
                     />
                   </div>
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-450 dark:text-slate-400 mb-1">{t.password}</label>
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-455 dark:text-slate-400 mb-1">{t.password}</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-455 pointer-events-none">
                     <Lock className="w-4 h-4" />
                   </span>
                   <input
@@ -476,22 +515,23 @@ export default function StudentPortal({
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-3.5 py-2.5 text-sm rounded-full border border-slate-300 dark:border-slate-855 bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="••••••••"
+                    className={`w-full pl-9 pr-3.5 py-2.5 text-xs rounded-xl border bg-transparent focus:ring-1 focus:ring-blue-500 outline-none transition-all ${
+                      theme === 'dark' ? 'border-slate-800 focus:bg-slate-950/20 text-slate-100' : 'border-slate-200 focus:bg-slate-50/20 text-slate-800'
+                    }`}
                   />
                 </div>
               </div>
 
-              {/* Submit trigger button - Sleek blue active button with shadow */}
               <button
                 type="submit"
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 text-xs flex justify-center items-center gap-1.5"
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-extrabold rounded-full transition-all shadow-md shadow-blue-500/25 hover:shadow-blue-500/35 text-xs flex justify-center items-center gap-1.5 cursor-pointer"
               >
                 <span>{isRegistering ? t.registerBtn : t.loginBtn}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </form>
 
-            {/* Selector Trigger */}
             <div className="text-center text-xs pt-2">
               <button
                 onClick={() => {
@@ -499,7 +539,7 @@ export default function StudentPortal({
                   setErrorMessage('');
                   setSuccessMessage('');
                 }}
-                className="text-blue-650 dark:text-blue-400 hover:underline font-bold"
+                className="text-blue-600 dark:text-blue-400 hover:underline font-extrabold"
               >
                 {isRegistering ? t.haveAccount : t.noAccount}
               </button>
