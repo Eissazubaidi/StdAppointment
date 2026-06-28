@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { AppNotification, Appointment, Lang, Theme } from '../types';
+import { AppNotification, Appointment, Lang, Theme, User } from '../types';
 import { Mail, MessageSquare, Smartphone, Bell, CheckCircle, ExternalLink, ShieldCheck } from 'lucide-react';
 
 interface VirtualNotificationSimProps {
   notifications: AppNotification[];
   appointments: Appointment[];
   activeEmail: string;
+  currentUser?: User | null;
   lang: Lang;
   theme: Theme;
   onConfirmAppointment: (appointmentId: string) => void;
@@ -20,6 +21,7 @@ export default function VirtualNotificationSim({
   notifications,
   appointments,
   activeEmail,
+  currentUser,
   lang,
   theme,
   onConfirmAppointment,
@@ -31,13 +33,20 @@ export default function VirtualNotificationSim({
 }: VirtualNotificationSimProps) {
   const [activeTab, setActiveTab] = useState<'email' | 'sms' | 'push'>('email');
 
-  // Filter emails belonging to either the student or the current active email
+  // Filter emails belonging strictly to the current active user
   const filteredEmails = notifications.filter(
-    (n) => n.type === 'email' && (n.recipient.toLowerCase() === activeEmail.toLowerCase() || activeEmail === 'director@institute.edu.sa')
+    (n) => n.type === 'email' && currentUser && n.recipient.toLowerCase().trim() === currentUser.email.toLowerCase().trim()
   );
 
-  const filteredSMS = notifications.filter((n) => n.type === 'sms');
-  const filteredPush = notifications.filter((n) => n.type === 'app');
+  // Filter SMS belonging strictly to the current active user
+  const filteredSMS = notifications.filter(
+    (n) => n.type === 'sms' && currentUser && n.recipient.trim() === currentUser.phone.trim()
+  );
+
+  // Filter Push notifications belonging strictly to the current active user
+  const filteredPush = notifications.filter(
+    (n) => n.type === 'app' && currentUser && n.recipient.toLowerCase().trim() === currentUser.email.toLowerCase().trim()
+  );
 
   const isRtl = lang === 'ar';
 

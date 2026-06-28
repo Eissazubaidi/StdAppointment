@@ -343,6 +343,15 @@ export default function App() {
   const handleBookAppointment = (date: string, timeSlot: string, reason: string) => {
     if (!currentUser) return;
 
+    // Double safeguard check
+    const hasExistingBookingOnDay = appointments.some(
+      (apt) =>
+        apt.studentId === currentUser.id &&
+        apt.date === date &&
+        apt.status !== 'cancelled'
+    );
+    if (hasExistingBookingOnDay) return;
+
     const aptId = `APT-${Math.floor(1000 + Math.random() * 9000)}`;
     const verificationCode = Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -857,6 +866,7 @@ export default function App() {
             notifications={notifications}
             appointments={appointments}
             activeEmail={currentUser ? currentUser.email : ''}
+            currentUser={currentUser}
             lang={lang}
             theme={theme}
             onConfirmAppointment={handleConfirmAppointment}

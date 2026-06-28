@@ -86,6 +86,23 @@ export default function StudentBooking({
       return;
     }
 
+    // Prevent booking more than one appointment on the same day
+    const hasExistingBookingOnDay = appointments.some(
+      (apt) =>
+        apt.studentId === currentUser.id &&
+        apt.date === selectedDate &&
+        apt.status !== 'cancelled'
+    );
+
+    if (hasExistingBookingOnDay) {
+      setErrorMessage(
+        isRtl
+          ? 'عذراً، لا يسمح بحجز أكثر من موعد واحد في نفس اليوم.'
+          : 'Sorry, you cannot book more than one appointment on the same day.'
+      );
+      return;
+    }
+
     if (!reason.trim()) {
       setErrorMessage(isRtl ? 'يرجى كتابة سبب المقابلة ليعرف المدير غرض الزيارة.' : 'Please describe the reason for your visit.');
       return;
