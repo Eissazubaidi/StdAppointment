@@ -30,7 +30,8 @@ export const seedUsers: User[] = [
     phone: '+966501234567',
     role: 'student',
     isVerified: true,
-    createdAt: '2026-06-10T08:00:00.000Z'
+    createdAt: '2026-06-10T08:00:00.000Z',
+    password: '123456'
   },
   {
     id: 'student-2',
@@ -39,7 +40,8 @@ export const seedUsers: User[] = [
     phone: '+966507654321',
     role: 'student',
     isVerified: true,
-    createdAt: '2026-06-11T09:15:00.000Z'
+    createdAt: '2026-06-11T09:15:00.000Z',
+    password: '123456'
   },
   {
     id: 'student-3',
@@ -49,7 +51,8 @@ export const seedUsers: User[] = [
     role: 'student',
     isVerified: false,
     verificationCode: '7741',
-    createdAt: '2026-06-13T10:30:00.000Z'
+    createdAt: '2026-06-13T10:30:00.000Z',
+    password: '123456'
   },
   {
     id: 'director-1',
@@ -58,7 +61,8 @@ export const seedUsers: User[] = [
     phone: '+966500000001',
     role: 'director',
     isVerified: true,
-    createdAt: '2026-01-01T00:00:00.000Z'
+    createdAt: '2026-01-01T00:00:00.000Z',
+    password: '123456'
   }
 ];
 

@@ -11,6 +11,7 @@ export interface User {
   isVerified: boolean;
   verificationCode?: string;
   createdAt: string;
+  password?: string;
 }
 
 export type AppointmentStatus = 'pending_email' | 'confirmed' | 'cancelled' | 'completed';

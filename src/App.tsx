@@ -203,11 +203,15 @@ export default function App() {
   // State Updates API
 
   // 1. Student Login
-  const handleLogin = (email: string, role: UserRole): boolean => {
+  const handleLogin = (email: string, role: UserRole, password?: string): boolean => {
     const matchedUser = userList.find(
       (u) => u.email.toLowerCase() === email.toLowerCase() && u.role === role
     );
     if (matchedUser) {
+      const storedPassword = matchedUser.password || '123456';
+      if (password && storedPassword !== password) {
+        return false;
+      }
       setCurrentUser(matchedUser);
       // Route instantly
       if (role === 'director') {
@@ -221,7 +225,7 @@ export default function App() {
   };
 
   // 2. Student Registration
-  const handleRegister = (name: string, email: string, phone: string) => {
+  const handleRegister = (name: string, email: string, phone: string, password?: string) => {
     const checkEmail = email.trim().toLowerCase();
     
     // Check if user already exists
@@ -240,7 +244,8 @@ export default function App() {
       role: 'student',
       isVerified: false,
       verificationCode,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      password: password || '123456'
     };
 
     const updatedList = [...userList, newUser];
@@ -565,9 +570,12 @@ export default function App() {
   };
 
   // 11. Profile updates for current user (like director name)
-  const handleUpdateProfile = (name: string, phone: string) => {
+  const handleUpdateProfile = (name: string, phone: string, password?: string) => {
     if (!currentUser) return;
     const updatedUser = { ...currentUser, name, phone };
+    if (password) {
+      updatedUser.password = password;
+    }
     setCurrentUser(updatedUser);
 
     // Update in userList state

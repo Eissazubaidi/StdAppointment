@@ -15,7 +15,7 @@ interface DirectorDashboardProps {
   onUpdateSchedules: (updatedSchedules: WeeklySchedule[]) => void;
   langCode: Lang;
   currentUser?: any;
-  onUpdateProfile?: (name: string, phone: string) => void;
+  onUpdateProfile?: (name: string, phone: string, password?: string) => void;
 }
 
 export default function DirectorDashboard({
@@ -44,6 +44,7 @@ export default function DirectorDashboard({
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(currentUser?.name || 'أ. د. عبدالمحسن بن صالح آل شيخ');
   const [editPhone, setEditPhone] = useState<string>(currentUser?.phone || '+966500000001');
+  const [editPassword, setEditPassword] = useState<string>('');
   const [profileSuccessMsg, setProfileSuccessMsg] = useState<string>('');
 
   const handleSaveProfile = () => {
@@ -52,8 +53,8 @@ export default function DirectorDashboard({
       return;
     }
     if (onUpdateProfile) {
-      onUpdateProfile(editName.trim(), editPhone.trim());
-      setProfileSuccessMsg(isRtl ? 'تم تحديث اسم مدير المعهد بنجاح!' : 'Director name updated successfully!');
+      onUpdateProfile(editName.trim(), editPhone.trim(), editPassword.trim() || undefined);
+      setProfileSuccessMsg(isRtl ? 'تم تحديث البيانات بنجاح!' : 'Director profile updated successfully!');
       setTimeout(() => {
         setProfileSuccessMsg('');
         setIsEditingProfile(false);
@@ -243,7 +244,7 @@ export default function DirectorDashboard({
 
         {isEditingProfile && (
           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-850 space-y-4 max-w-xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase block">{isRtl ? 'اسم مدير المعهد الحالي:' : 'Director Full Name:'}</label>
                 <input
@@ -259,6 +260,16 @@ export default function DirectorDashboard({
                   type="text"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
+                  className={`w-full text-xs p-2.5 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase block">{isRtl ? 'كلمة المرور الجديدة:' : 'New Password:'}</label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder={isRtl ? 'تعيين كلمة مرور جديدة' : 'Set new password'}
                   className={`w-full text-xs p-2.5 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
                 />
               </div>

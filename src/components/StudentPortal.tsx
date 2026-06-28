@@ -8,12 +8,12 @@ interface StudentPortalProps {
   theme: Theme;
   currentUser: User | null;
   appointments: Appointment[];
-  onLogin: (email: string, role: 'student' | 'director') => boolean;
-  onRegister: (name: string, email: string, phone: string) => void;
+  onLogin: (email: string, role: 'student' | 'director', password?: string) => boolean;
+  onRegister: (name: string, email: string, phone: string, password?: string) => void;
   onLogout: () => void;
   onCancelAppointment: (appointmentId: string) => void;
   onVerifyEmail: (email: string) => void;
-  onUpdateProfile?: (name: string, phone: string) => void;
+  onUpdateProfile?: (name: string, phone: string, password?: string) => void;
 }
 
 export default function StudentPortal({
@@ -36,7 +36,7 @@ export default function StudentPortal({
   const [email, setEmail] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
-  const [password, setPassword] = useState<string>('••••••••');
+  const [password, setPassword] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
 
@@ -44,12 +44,14 @@ export default function StudentPortal({
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
   const [editName, setEditName] = useState<string>(currentUser?.name || '');
   const [editPhone, setEditPhone] = useState<string>(currentUser?.phone || '');
+  const [editPassword, setEditPassword] = useState<string>('');
   const [profileSuccessMsg, setProfileSuccessMsg] = useState<string>('');
 
   const startEditing = () => {
     if (currentUser) {
       setEditName(currentUser.name);
       setEditPhone(currentUser.phone);
+      setEditPassword(currentUser.password || '');
       setIsEditingProfile(true);
     }
   };
@@ -60,7 +62,7 @@ export default function StudentPortal({
       return;
     }
     if (onUpdateProfile) {
-      onUpdateProfile(editName.trim(), editPhone.trim());
+      onUpdateProfile(editName.trim(), editPhone.trim(), editPassword.trim() || undefined);
       setProfileSuccessMsg(isRtl ? 'تم تحديث بيانات الحساب بنجاح!' : 'Profile updated successfully!');
       setTimeout(() => {
         setProfileSuccessMsg('');
@@ -83,13 +85,13 @@ export default function StudentPortal({
     const isDirector = email.toLowerCase() === 'director@institute.edu.sa';
     const role = isDirector ? 'director' : 'student';
 
-    const success = onLogin(email.trim(), role);
+    const success = onLogin(email.trim(), role, password);
 
     if (!success) {
       setErrorMessage(
         isRtl 
-          ? 'المستخدم غير مسجل لدينا! يرجى إنشاء حساب طالب جديد أولاً.' 
-          : 'User not registered! Please create a student account first.'
+          ? 'خطأ في البريد الإلكتروني أو كلمة المرور! يرجى التحقق وإعادة المحاولة.' 
+          : 'Incorrect email or password! Please check and try again.'
       );
     } else {
       setSuccessMessage(isRtl ? 'تم تسجيل الدخول بنجاح!' : 'Logged in successfully!');
@@ -115,7 +117,7 @@ export default function StudentPortal({
       return;
     }
 
-    onRegister(name.trim(), email.trim(), phone.trim());
+    onRegister(name.trim(), email.trim(), phone.trim(), password);
     setSuccessMessage(isRtl ? 'تم إنشاء الحساب بنجاح! يرجى النقر على رابط التفعيل في صندوق البريد الجامعي الموضح أدناه.' : 'Account registered! Please click the activation link in the Student Virtual Inbox at the bottom of the page.');
     
     // Switch to login or clear fields
@@ -167,6 +169,16 @@ export default function StudentPortal({
                     type="text"
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
+                    className={`w-full text-xs p-2.5 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-400 block uppercase">{isRtl ? 'كلمة المرور الجديدة:' : 'New Password:'}</label>
+                  <input
+                    type="password"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder={isRtl ? 'كلمة المرور الجديدة' : 'New password'}
                     className={`w-full text-xs p-2.5 rounded-xl border ${theme === 'dark' ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-800'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
                   />
                 </div>
